@@ -1,0 +1,21 @@
+{
+    "name": "galonskiy/yii2-codebuffer",
+    "description": "CodeBuffer - description",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension"],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Galonskiy Artem",
+            "email": "mailbox@galonskiy.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "galonskiy\\codebuffer\\": ""
+        }
+    }
+}
