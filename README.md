@@ -28,4 +28,10 @@ Usage
 Once the extension is installed, simply use it in your code by  :
 
 ```php
-<?= \galonskiy\codebuffer\AutoloadExample::widget(); ?>```
+	'components' => [
+        ...
+        'codebuffer' => [
+            'class' => '\galonskiy\codebuffer\CodeBuffer'
+        ]
+        ...
+    ],```
