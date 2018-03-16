@@ -13,7 +13,7 @@ use Yii;
 class CodeBuffer{
     
     /**
-     * @var Yii DB conection.
+     * @var Yii DB connection.
      */            
     private $dbConnection;
     
@@ -28,13 +28,13 @@ class CodeBuffer{
         return ' OR validity_at < '.Yii::$app->formatter->asTimestamp('now').' OR attempts_count >= number_attempts';
         
     }
-    
+
     /**
      * Change default Yii DB conection
      *
-     * @param string $connectionID - индетификатор подключения к БД
+     * @param string $connectionID
      *
-     * @return this class
+     * @return CodeBuffer
      */
     public function setConnectionId($connectionID = 'db'){
         
@@ -43,22 +43,24 @@ class CodeBuffer{
         return $this;
         
     }
-    
+
     /**
      * Generates and save new code in DB.
      *
-     * @param string|integer $identifier - телефон, e-mail или какой-либо другой способо передачи кода
-     * @param string|integer|null $entityID - какой угодно ID пользователя или либой другой сущности
-     * @param integer $lifetimeInMinutes - количество минут на подтверждение
-     * @param integer $amountOfAttempts - количество попыток для подтверждения
+     * @param string|integer $identifier - phone number, e-amil or some other method of data transmission
+     * @param string|integer|null $entityID
+     * @param int $numberOfSymbols
+     * @param integer $lifetimeInMinutes
+     * @param integer $amountOfAttempts
      *
      * @return string the generated code
+     * @throws \yii\db\Exception
      */
     public function generate($identifier, $entityID, $numberOfSymbols = 3, $lifetimeInMinutes = 15, $amountOfAttempts = 3) {
         
-        //TODO надо сделать ограничение по максимально возможному кол-ву символов
-        $n1 = 10 ** $numberOfSymbols;
-        $n2 = (10 ** ($numberOfSymbols + 1) - 1);
+        //TODO add max number of symbols
+        $n1 = pow(10, $numberOfSymbols);
+        $n2 = pow(10, ($numberOfSymbols + 1) - 1);
         
         $code = rand($n1, $n2);
         
@@ -66,8 +68,7 @@ class CodeBuffer{
         $codeHash = md5($code);
         $validatyAt = Yii::$app->formatter->asTimestamp('now + '.$lifetimeInMinutes.' minute');
 
-        
-        //TODO Проверил на 100 записях что удалять одну запись что 100 тратится 3 миллисекунды. По этому сразу очищаем буффер от ненужного хламма
+
         $this->dbConnection->createCommand()->delete('ga_code_buffer', 'identifier_hash = \''.$identifierHash.'\''.$this->getOptionalWhere())->execute();
       
         if (Yii::$app->db->createCommand('INSERT INTO `ga_code_buffer` (`identifier_hash`, `code_hash`, `validity_at`, `attempts_count`, `number_attempts`) VALUES (\''.$identifierHash.'\', \''.$codeHash.'\', \''.$validatyAt.'\', 0, \''.$amountOfAttempts.'\')')->execute()){
@@ -83,14 +84,12 @@ class CodeBuffer{
     /**
      * Validate code.
      *
-     * @param string|integer $identifier - телефон, e-mail или какой-либо другой способо передачи кода
-     * @param string|integer|null $entityID - какой угодно ID пользователя или либой другой сущности
-     * @param string|integer $code - код который надо провалидировавть
-     * 
-     * Запрашиваем по $identifierHash и ограничениям по сроку жизни и кол-ву проб. 
-     * По коду не запрашиваем потому что надо проставлять кол-во попыток, а если заправшивать сразу через код то кол-во попыток не удастся увеличить.
+     * @param string|integer $identifier
+     * @param string|integer|null $entityID
+     * @param string|integer $code
      *
      * @return true or false
+     * @throws \yii\db\Exception
      */
     public function validate($identifier, $entityID, $code) {
         
