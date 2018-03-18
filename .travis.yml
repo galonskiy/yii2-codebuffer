@@ -18,5 +18,8 @@ install:
   - export PATH="$HOME/.composer/vendor/bin:$PATH"
   - travis_retry composer install --prefer-dist --no-interaction
 
+before_script:
+  - psql -c 'create database codebuffer_test;' -U postgres
+
 script:
-  - phpunit $PHPUNIT_FLAGS
+  - phpunit
