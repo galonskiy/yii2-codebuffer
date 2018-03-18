@@ -41,6 +41,17 @@ class CodeBuffer{
 
     }
 
+    public static function generateRandomCode(int $numberOfSymbols): string
+    {
+        $numberOfSymbols--;
+
+        //TODO add max number of symbols
+        $n1 = pow(10, $numberOfSymbols);
+        $n2 = pow(10, ($numberOfSymbols + 1)) - 1;
+
+        return (string)rand($n1, $n2);
+    }
+
     /**
      * Generates and save new code in DB.
      *
@@ -53,17 +64,12 @@ class CodeBuffer{
      * @return string the generated code
      * @throws \yii\db\Exception
      */
-    public function generate(string $identifier, string $entityID, int $numberOfSymbols = 3, int $lifetimeInMinutes = 15, int $amountOfAttempts = 3): string
+    public function generate(string $identifier, string $entityID, int $numberOfSymbols = 4, int $lifetimeInMinutes = 15, int $amountOfAttempts = 3): string
     {
-
-        //TODO add max number of symbols
-        $n1 = pow(10, $numberOfSymbols);
-        $n2 = pow(10, ($numberOfSymbols + 1)) - 1;
-
-        $code = rand($n1, $n2);
+        $code = $this->generateRandomCode($numberOfSymbols);
 
         $identifierHash = md5($identifier.$entityID);
-        $codeHash = md5($code);
+        $codeHash = md5($this->generateRandomCode($numberOfSymbols));
         $validatyAt = Yii::$app->formatter->asTimestamp('now + '.$lifetimeInMinutes.' minute');
 
 
@@ -97,9 +103,6 @@ class CodeBuffer{
      * @param null $error
      * @return true or false
      * @throws \yii\db\Exception
-     *
-     *
-     *
      */
     public function validate(string $identifier, string $entityID, string $code, &$error = null): bool
     {
@@ -132,7 +135,7 @@ class CodeBuffer{
                     Yii::$app->db->createCommand()->update($this->tableName, [ 'attempts_count' => $attemptsCount ], 'identifier_hash = \''.$identifierHash.'\'')->execute();
 
                     $error = 'Wrong code.' . $numberAttemptsLeft . 'Attempts left.';
-                    
+
                 } else {
 
                     $this->delete($identifierHash);
