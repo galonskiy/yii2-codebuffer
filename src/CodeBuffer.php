@@ -41,6 +41,13 @@ class CodeBuffer{
 
     }
 
+    /**
+     * Change default Yii DB conection
+     *
+     * @param int $numberOfSymbols
+     *
+     * @return string
+     */
     public static function generateRandomCode(int $numberOfSymbols): string
     {
         $numberOfSymbols--;
@@ -62,16 +69,14 @@ class CodeBuffer{
      * @param integer $amountOfAttempts
      *
      * @return string the generated code
-     * @throws \yii\db\Exception
      */
     public function generate(string $identifier, string $entityID, int $numberOfSymbols = 4, int $lifetimeInMinutes = 15, int $amountOfAttempts = 3): string
     {
         $code = $this->generateRandomCode($numberOfSymbols);
 
         $identifierHash = md5($identifier.$entityID);
-        $codeHash = md5($this->generateRandomCode($numberOfSymbols));
+        $codeHash = md5($code);
         $validatyAt = Yii::$app->formatter->asTimestamp('now + '.$lifetimeInMinutes.' minute');
-
 
         $this->delete($identifierHash);
 
@@ -84,13 +89,10 @@ class CodeBuffer{
         ]);
 
         if ($insertCommand->execute()){
-
             return $code;
-
         }
 
         return false;
-
     }
 
     /**
@@ -102,7 +104,6 @@ class CodeBuffer{
      *
      * @param null $error
      * @return true or false
-     * @throws \yii\db\Exception
      */
     public function validate(string $identifier, string $entityID, string $code, &$error = null): bool
     {
@@ -134,7 +135,7 @@ class CodeBuffer{
 
                     Yii::$app->db->createCommand()->update($this->tableName, [ 'attempts_count' => $attemptsCount ], 'identifier_hash = \''.$identifierHash.'\'')->execute();
 
-                    $error = 'Wrong code.' . $numberAttemptsLeft . 'Attempts left.';
+                    $error = 'Wrong code. ' . $numberAttemptsLeft . ' attempts left.';
 
                 } else {
 
@@ -156,7 +157,6 @@ class CodeBuffer{
      *
      * @param string $identifierHash
      *
-     * @throws \yii\db\Exception
      */
     private function delete(string $identifierHash)
     {
@@ -164,9 +164,8 @@ class CodeBuffer{
     }
 
     /**
-     * Validate all old row.
+     * Delete all old row.
      *
-     * @throws \yii\db\Exception
      */
     public function deleteAll()
     {
